@@ -1,13 +1,34 @@
-# Xcode
-*.xcuserdatad
-*.xcuserdata
-DerivedData/
-.build/
-
-# SwiftPM
-/.swiftpm
-/.build
-
 # macOS
 .DS_Store
 
+# Xcode / iOS app
+DerivedData/
+*.xcuserdatad
+*.xcuserdata
+
+# Swift Package Manager
+.swiftpm/
+.build/
+# If you use a top-level workspace, you can commit Package.resolved there.
+# Otherwise, keep the server's Package.resolved (helps lock Vapor deps).
+# Package.resolved
+
+# Vapor / Server
+# Logs, runtime artifacts, local env
+Logs/
+*.log
+Run/
+.env
+.env.*
+.swiftlint.yml
+
+# Docker (if you add it)
+docker-compose.override.yml
+*.local.yml
+
+# VSCode or other editors (optional)
+.vscode/
+.idea/
+
+# Misc
+*.swp
