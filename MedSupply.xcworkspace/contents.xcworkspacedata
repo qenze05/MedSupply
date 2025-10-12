@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "group:MedSupply"
+      name = "MedSupply">
+      <FileRef
+         location = "group:MedSupply.xcodeproj">
+      </FileRef>
+      <Group
+         location = "group:MedSupply"
+         name = "MedSupply">
+         <FileRef
+            location = "group:MedSupplyApp.swift">
+         </FileRef>
+         <FileRef
+            location = "group:Assets.xcassets">
+         </FileRef>
+         <FileRef
+            location = "group:ContentView.swift">
+         </FileRef>
+      </Group>
+   </Group>
+   <FileRef
+      location = "group:VaporServer">
+   </FileRef>
+</Workspace>
