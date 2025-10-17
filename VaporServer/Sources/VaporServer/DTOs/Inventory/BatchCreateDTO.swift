@@ -21,7 +21,7 @@ struct BatchResponseDTO: Content {
   let expiresAt: Date?
   let createdAt: Date?
   let updatedAt: Date?
-
+  
   init(_ b: Batch) {
     id = b.id!
     productID = b.$product.id

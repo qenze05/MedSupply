@@ -9,15 +9,12 @@
 import Vapor
 
 extension Request {
-  /// Поточний автентифікований користувач (якщо є)
   var currentUser: UserRecord? { auth.get(UserRecord.self) }
-
-  /// Вимагає наявність автентифікованого користувача
+  
   func requireUser() throws -> UserRecord {
     try auth.require(UserRecord.self)
   }
-
-  /// Зручний доступ до user.id
+  
   func requireUserID() throws -> UUID {
     try requireUser().id
   }

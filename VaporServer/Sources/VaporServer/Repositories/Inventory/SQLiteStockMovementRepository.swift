@@ -13,7 +13,7 @@ struct SQLiteStockMovementRepository: StockMovementRepository {
     try await movement.create(on: db)
     return movement
   }
-
+  
   func list(productID: UUID?, locationID: UUID?, limit: Int, offset: Int, on db: any Database) async throws -> [StockMovement] {
     var q = StockMovement.query(on: db).sort(\.$createdAt, .descending)
     if let productID { q = q.filter(\.$product.$id == productID) }

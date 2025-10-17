@@ -16,24 +16,24 @@ struct SQLiteProductRepository: ProductRepository {
     try await product.create(on: db)
     return product
   }
-
+  
   func find(id: UUID, on db: any Database) async throws -> Product? {
     try await Product.find(id, on: db)
   }
-
+  
   func findBySKU(_ sku: String, on db: any Database) async throws -> Product? {
     try await Product.query(on: db).filter(\.$sku == sku).first()
   }
-
+  
   func list(limit: Int, offset: Int, on db: any Database) async throws -> [Product] {
     try await Product.query(on: db).range(offset..<(offset+limit)).all()
   }
-
+  
   func update(_ product: Product, on db: any Database) async throws -> Product {
     try await product.update(on: db)
     return product
   }
-
+  
   func delete(id: UUID, on db: any Database) async throws {
     guard let found = try await Product.find(id, on: db) else { throw RepositoryError.notFound }
     try await found.delete(on: db)

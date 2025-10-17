@@ -15,7 +15,7 @@ struct AccessTokenPayload: JWTPayload, Sendable {
   let expiration: ExpirationClaim
   
   func verify(using algorithm: some JWTAlgorithm) async throws {
-      try expiration.verifyNotExpired()
+    try expiration.verifyNotExpired()
   }
 }
 

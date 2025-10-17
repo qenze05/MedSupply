@@ -28,7 +28,7 @@ struct ProductResponseDTO: Content {
   let unit: Product.UnitOfMeasure
   let createdAt: Date?
   let updatedAt: Date?
-
+  
   init(_ p: Product) {
     self.id = p.id!
     self.sku = p.sku

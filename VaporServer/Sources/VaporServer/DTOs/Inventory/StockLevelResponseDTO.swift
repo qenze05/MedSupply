@@ -17,7 +17,7 @@ struct StockLevelResponseDTO: Content {
   let reserved: Int
   let available: Int
   let updatedAt: Date?
-
+  
   init(_ s: StockLevel) {
     id = s.id!
     productID = s.$product.id

@@ -26,7 +26,7 @@ struct LocationResponseDTO: Content {
   let address: String?
   let createdAt: Date?
   let updatedAt: Date?
-
+  
   init(_ l: Location) {
     id = l.id!
     code = l.code

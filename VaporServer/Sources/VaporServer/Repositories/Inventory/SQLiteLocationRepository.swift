@@ -16,24 +16,24 @@ struct SQLiteLocationRepository: LocationRepository {
     try await location.create(on: db)
     return location
   }
-
+  
   func find(id: UUID, on db: any Database) async throws -> Location? {
     try await Location.find(id, on: db)
   }
-
+  
   func findByCode(_ code: String, on db: any Database) async throws -> Location? {
     try await Location.query(on: db).filter(\.$code == code).first()
   }
-
+  
   func list(limit: Int, offset: Int, on db: any Database) async throws -> [Location] {
     try await Location.query(on: db).range(offset..<(offset+limit)).all()
   }
-
+  
   func update(_ location: Location, on db: any Database) async throws -> Location {
     try await location.update(on: db)
     return location
   }
-
+  
   func delete(id: UUID, on db: any Database) async throws {
     guard let found = try await Location.find(id, on: db) else { throw RepositoryError.notFound }
     try await found.delete(on: db)

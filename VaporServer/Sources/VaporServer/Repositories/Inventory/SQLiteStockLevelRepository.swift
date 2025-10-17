@@ -9,7 +9,7 @@
 import Fluent
 
 struct SQLiteStockLevelRepository: StockLevelRepository {
-
+  
   func getOrCreate(productID: UUID, locationID: UUID, batchID: UUID?, on db: any Database) async throws -> StockLevel {
     if let existing = try await find(productID: productID, locationID: locationID, batchID: batchID, on: db) {
       return existing
@@ -18,7 +18,7 @@ struct SQLiteStockLevelRepository: StockLevelRepository {
     try await item.create(on: db)
     return item
   }
-
+  
   func setOnHand(productID: UUID, locationID: UUID, batchID: UUID?, to newValue: Int, on db: any Database) async throws -> StockLevel {
     try await db.transaction { tx in
       guard newValue >= 0 else { throw RepositoryError.invalidState("onHand cannot be negative") }
@@ -31,7 +31,7 @@ struct SQLiteStockLevelRepository: StockLevelRepository {
       return row
     }
   }
-
+  
   func changeReserved(productID: UUID, locationID: UUID, batchID: UUID?, delta: Int, on db: any Database) async throws -> StockLevel {
     try await db.transaction { tx in
       let row = try await getOrCreate(productID: productID, locationID: locationID, batchID: batchID, on: tx)
@@ -43,7 +43,7 @@ struct SQLiteStockLevelRepository: StockLevelRepository {
       return row
     }
   }
-
+  
   func changeOnHand(productID: UUID, locationID: UUID, batchID: UUID?, delta: Int, on db: any Database) async throws -> StockLevel {
     try await db.transaction { tx in
       let row = try await getOrCreate(productID: productID, locationID: locationID, batchID: batchID, on: tx)
@@ -55,7 +55,7 @@ struct SQLiteStockLevelRepository: StockLevelRepository {
       return row
     }
   }
-
+  
   func find(productID: UUID, locationID: UUID, batchID: UUID?, on db: any Database) async throws -> StockLevel? {
     try await StockLevel.query(on: db)
       .filter(\.$product.$id == productID)
@@ -66,7 +66,7 @@ struct SQLiteStockLevelRepository: StockLevelRepository {
       }
       .first()
   }
-
+  
   func list(productID: UUID?, locationID: UUID?, limit: Int, offset: Int, on db: any Database) async throws -> [StockLevel] {
     var q = StockLevel.query(on: db)
     if let productID { q = q.filter(\.$product.$id == productID) }

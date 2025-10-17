@@ -25,7 +25,6 @@ struct BatchController: RouteCollection {
     return .init(saved)
   }
 
-  /// GET /batches?productID=...
   func listByProduct(req: Request) async throws -> [BatchResponseDTO] {
     guard let productID = try? req.query.get(UUID.self, at: "productID") else { return [] }
     let limit = min((try? req.query.get(Int.self, at: "limit")) ?? 50, 200)

@@ -20,7 +20,7 @@ struct StockMovementResponseDTO: Content {
   let reference: String?
   let performedByUserID: UUID?
   let createdAt: Date?
-
+  
   init(_ m: StockMovement) {
     id = m.id!
     productID = m.$product.id

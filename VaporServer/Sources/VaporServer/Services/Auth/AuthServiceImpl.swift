@@ -81,10 +81,10 @@ public struct AuthServiceImpl: AuthService, Sendable {
   private func issueTokenPair(for user: UserRecord, on req: Request) async throws -> TokenPairDTO {
     let expDate = Date().addingTimeInterval(accessTTL)
     let payload = AccessTokenPayload(
-        subject: SubjectClaim(value: user.id.uuidString),
-        email: user.email,
-        role: user.role,
-        expiration: ExpirationClaim(value: expDate)
+      subject: SubjectClaim(value: user.id.uuidString),
+      email: user.email,
+      role: user.role,
+      expiration: ExpirationClaim(value: expDate)
     )
     let access = try await req.jwt.sign(payload, kid: "default")
     
