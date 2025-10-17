@@ -12,8 +12,16 @@ public func configure(_ app: Application) async throws {
   try configureSQLite(app)
   
   registerAuthMigrations(app)
+  registerInventoryMigrations(app)
   try await app.autoMigrate()
   
+  // Repositories DI
+  app.use(.sqlite)
+
+  // 🔧 Services DI (Inventory service)
+  app.use(.live)
+  
+  // Auth deps + JWT keys
   registerAuthDependencies(app)
   let secret = Environment.get("JWT_SECRET") ?? "dev_secret_change_me_please_change"
   app.jwt.keys = await JWTKeyCollection().add(hmac: .init(stringLiteral: secret), digestAlgorithm: .sha256, kid: "default")
