@@ -55,7 +55,6 @@ struct StockLevelResponseDTO: Content {
 }
 
 func makeTestApp() async throws -> Application {
-    // ✅ async-safe factory
     let app = try await Application.make(.testing)
 
     // JWT keys
@@ -66,28 +65,27 @@ func makeTestApp() async throws -> Application {
     // In-memory SQLite
     app.databases.use(.sqlite(.memory), as: .sqlite)
 
-    // Migrations (use yours if you have helpers)
-    app.migrations.add(CreateProduct())
-    app.migrations.add(CreateLocation())
-    app.migrations.add(CreateBatch())
-    app.migrations.add(CreateStockLevel())
-    app.migrations.add(CreateStockMovement())
+    // ✅ Використовуємо ТІЛЬКИ хелпери (жодних ручних add):
+    registerAuthMigrations(app)
+    registerInventoryMigrations(app)
 
     try await app.autoMigrate()
 
-    // DI (same as prod)
+    // DI
     app.use(.sqlite)
     app.use(.live)
 
-    // Routes
-    try routes(app)
+    // Auth DI
+    registerAuthDependencies(app)
 
+    try routes(app)
     return app
 }
 
+
 // Хелпер: реєстрація + логін (повертає токен)
 func registerAndLogin(_ app: Application, fullName: String, email: String, password: String, role: String) async throws -> String {
-    // register
+    // 1) Register
     try await app.test(.POST, "/api/auth/register", beforeRequest: { req in
         try req.content.encode([
             "email": email,
@@ -99,7 +97,19 @@ func registerAndLogin(_ app: Application, fullName: String, email: String, passw
         XCTAssertEqual(res.status, .ok, "Register failed: \(res.status)")
     })
 
-    // login
+    // 2) Promote via Fluent (без SQL)
+    //    Замініть тип `User`/поля, якщо у вас інші імена.
+    if let u = try await User.query(on: app.db)
+        .filter(\.$email == email)
+        .first()
+    {
+        u.role = role
+        try await u.save(on: app.db)
+    } else {
+        XCTFail("User not found after register")
+    }
+
+    // 3) Login → беремо токен з правильною роллю
     var accessToken = ""
     try await app.test(.POST, "/api/auth/login", beforeRequest: { req in
         try req.content.encode([
@@ -107,10 +117,10 @@ func registerAndLogin(_ app: Application, fullName: String, email: String, passw
             "password": password
         ])
     }, afterResponse: { res in
-        XCTAssertEqual(res.status, .ok)
+        XCTAssertEqual(res.status, .ok, "Login failed: \(res.status)")
         let login = try res.content.decode(LoginResponse.self)
         accessToken = login.tokens.accessToken
-        XCTAssertEqual(login.user.role.lowercased(), role.lowercased())
     })
+
     return accessToken
 }

@@ -75,38 +75,80 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
     }
   }
 
-  func outbound(productID: UUID, from locationID: UUID, batchID: UUID?, qty: Int,
-                reason: String?, reference: String?, performedBy: UUID?, on db: any Database) async throws -> StockLevel {
+  func outbound(productID: UUID,
+                from locationID: UUID,
+                batchID: UUID?,
+                qty: Int,
+                reason: String?,
+                reference: String?,
+                performedBy: UUID?,
+                on db: any Database) async throws -> StockLevel {
     try validateQty(qty)
     try await ensureBatchBelongs(productID: productID, batchID: batchID, on: db)
 
     return try await db.transaction { tx in
-      // Ensure there is enough AVAILABLE (onHand - reserved)
-      guard let row = try await repos.stockLevel.find(productID: productID, locationID: locationID, batchID: batchID, on: tx) else {
+      // 1) Знайти рівень
+      guard let row = try await repos.stockLevel.find(
+        productID: productID,
+        locationID: locationID,
+        batchID: batchID,
+        on: tx
+      ) else {
         throw InventoryError.notEnoughStock
       }
-      let available = row.onHand - row.reserved
-      guard available >= qty else { throw InventoryError.notEnoughStock }
 
-      // Preferred rule: consume reserved first (if any), then free
+      // 2) Перевірити, що фізично вистачає на складі
+      guard row.onHand >= qty else {
+        throw InventoryError.notEnoughStock
+      }
+
+      // 3) Спожити резерв у першу чергу
       let reservedConsume = min(row.reserved, qty)
       if reservedConsume > 0 {
-        _ = try await repos.stockLevel.changeReserved(productID: productID, locationID: locationID, batchID: batchID, delta: -reservedConsume, on: tx)
-      }
-      let remaining = qty - reservedConsume
-      if remaining > 0 {
-        _ = try await repos.stockLevel.changeOnHand(productID: productID, locationID: locationID, batchID: batchID, delta: -remaining, on: tx)
-      } else {
-        // still must decrease onHand by total qty
-        _ = try await repos.stockLevel.changeOnHand(productID: productID, locationID: locationID, batchID: batchID, delta: -qty, on: tx)
+        _ = try await repos.stockLevel.changeReserved(
+          productID: productID,
+          locationID: locationID,
+          batchID: batchID,
+          delta: -reservedConsume,
+          on: tx
+        )
       }
 
-      let updated = try await repos.stockLevel.getOrCreate(productID: productID, locationID: locationID, batchID: batchID, on: tx)
-      try await record(kind: .outbound, productID: productID, from: locationID, to: nil, batchID: batchID,
-                       qty: qty, reason: reason, reference: reference, performedBy: performedBy, on: tx)
+      // 4) onHand зменшуємо на ПОВНИЙ qty (а не лише на "вільну" частину)
+      _ = try await repos.stockLevel.changeOnHand(
+        productID: productID,
+        locationID: locationID,
+        batchID: batchID,
+        delta: -qty,
+        on: tx
+      )
+
+      // 5) Оновлене значення рівня
+      let updated = try await repos.stockLevel.getOrCreate(
+        productID: productID,
+        locationID: locationID,
+        batchID: batchID,
+        on: tx
+      )
+
+      // 6) Журнал рухів
+      try await record(
+        kind: .outbound,
+        productID: productID,
+        from: locationID,
+        to: nil,
+        batchID: batchID,
+        qty: qty,
+        reason: reason,
+        reference: reference,
+        performedBy: performedBy,
+        on: tx
+      )
+
       return updated
     }
   }
+
 
   func transfer(productID: UUID, from fromLocationID: UUID, to toLocationID: UUID, batchID: UUID?, qty: Int,
                 reason: String?, reference: String?, performedBy: UUID?, on db: any Database) async throws -> (from: StockLevel, to: StockLevel) {
