@@ -17,6 +17,7 @@ extension Application {
     var movement: any StockMovementRepository
     var customerRequest: any CustomerRequestRepository
     var payment: any PaymentRepository
+    var notification: any NotificationRepository
   }
   
   private struct RepositoriesKey: StorageKey {

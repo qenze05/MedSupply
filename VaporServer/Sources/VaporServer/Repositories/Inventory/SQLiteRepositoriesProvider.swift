@@ -18,7 +18,8 @@ extension Application.RepositoriesProvider {
         stockLevel: SQLiteStockLevelRepository(),
         movement: SQLiteStockMovementRepository(),
         customerRequest: SQLiteCustomerRequestRepository(),
-        payment: SQLitePaymentRepository()
+        payment: SQLitePaymentRepository(),
+        notification: SQLiteNotificationRepository()
       )
     }
   }
