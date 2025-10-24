@@ -18,12 +18,13 @@ struct CustomerRequestController: RouteCollection, Sendable {
     protected.get(":id", use: Self.details)                // GET  /api/customer-requests/:id
     protected.post(":id", "cancel", use: Self.cancel)      // POST /api/customer-requests/:id/cancel
       
-      let admin = base
-         .grouped(AccessTokenAuthenticator(), UserRecord.guardMiddleware(),
-                  RoleGuardMiddleware(["admin"]))
+    let manager = base.grouped(
+        AccessTokenAuthenticator(),
+        UserRecord.guardMiddleware(),
+        RoleGuardMiddleware(["manager"]))
 
-       admin.get("all", use: Self.adminList)                 // GET  /api/customer-requests/all
-       admin.post(":id", "status", use: Self.adminSetStatus) // POST /api/customer-requests/:id/status
+    manager.get("all", use: Self.adminList)                 // GET  /api/customer-requests/all
+    manager.post(":id", "status", use: Self.adminSetStatus) // POST /api/customer-requests/:id/status
   }
 
   // MARK: Handlers (static — не захватывают self)
