@@ -70,7 +70,7 @@ func makeTestApp() async throws -> Application {
   
   // DI
   app.use(.sqlite)
-  app.use(.live)
+  app.use(Application.live)
   
   // Auth DI
   registerAuthDependencies(app)
