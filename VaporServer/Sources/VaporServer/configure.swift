@@ -10,6 +10,7 @@ public func configure(_ app: Application) async throws {
   
   registerAuthMigrations(app)
   registerInventoryMigrations(app)
+  registerRequestMigrations(app)
   try await app.autoMigrate()
   
   app.use(.sqlite)
@@ -21,4 +22,5 @@ public func configure(_ app: Application) async throws {
   app.jwt.keys = await JWTKeyCollection().add(hmac: .init(stringLiteral: secret), digestAlgorithm: .sha256, kid: "default")
   
   try routes(app)
+  try routesCustomerRequests(app)
 }

@@ -16,7 +16,8 @@ extension Application.RepositoriesProvider {
         location: SQLiteLocationRepository(),
         batch: SQLiteBatchRepository(),
         stockLevel: SQLiteStockLevelRepository(),
-        movement: SQLiteStockMovementRepository()
+        movement: SQLiteStockMovementRepository(),
+        customerRequest: SQLiteCustomerRequestRepository()
       )
     }
   }

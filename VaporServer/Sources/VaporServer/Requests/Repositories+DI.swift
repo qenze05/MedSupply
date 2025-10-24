@@ -15,6 +15,7 @@ extension Application {
     var batch: any BatchRepository
     var stockLevel: any StockLevelRepository
     var movement: any StockMovementRepository
+    var customerRequest: any CustomerRequestRepository
   }
   
   private struct RepositoriesKey: StorageKey {
