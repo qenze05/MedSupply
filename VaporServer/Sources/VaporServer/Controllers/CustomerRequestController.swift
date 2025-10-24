@@ -23,11 +23,11 @@ struct CustomerRequestController: RouteCollection, Sendable {
         UserRecord.guardMiddleware(),
         RoleGuardMiddleware(["manager"]))
 
-    manager.get("all", use: Self.adminList)                 // GET  /api/customer-requests/all
-    manager.post(":id", "status", use: Self.adminSetStatus) // POST /api/customer-requests/:id/status
+      manager.get("all", use: Self.managerList)                 // GET  /api/customer-requests/all
+      manager.post(":id", "status", use: Self.managerSetStatus) // POST /api/customer-requests/:id/status
   }
 
-  // MARK: Handlers (static — не захватывают self)
+  // MARK: Handlers
 
   static func create(_ req: Request) async throws -> CustomerRequestResponseDTO {
     let user = try req.auth.require(UserRecord.self)
@@ -61,7 +61,7 @@ struct CustomerRequestController: RouteCollection, Sendable {
     
     // MARK: - Admin handlers
 
-    static func adminList(_ req: Request) async throws -> [CustomerRequestResponseDTO] {
+    static func managerList(_ req: Request) async throws -> [CustomerRequestResponseDTO] {
       let _ = try req.auth.require(UserRecord.self)
       let status = try? req.query.get(CustomerRequestStatus.self, at: "status")
       let customerId = try? req.query.get(UUID.self, at: "customerId")
@@ -73,7 +73,7 @@ struct CustomerRequestController: RouteCollection, Sendable {
         .adminList(status: status, customerId: customerId, productId: productId, page: page, per: per, on: req.db)
     }
 
-    static func adminSetStatus(_ req: Request) async throws -> CustomerRequestResponseDTO {
+    static func managerSetStatus(_ req: Request) async throws -> CustomerRequestResponseDTO {
       let admin = try req.auth.require(UserRecord.self)
       let id = try req.parameters.require("id", as: UUID.self)
       let dto = try req.content.decode(SetCustomerRequestStatusDTO.self)

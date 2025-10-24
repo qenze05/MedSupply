@@ -53,4 +53,12 @@ struct SQLiteCustomerRequestRepository: CustomerRequestRepository {
     try await model.save(on: db)
     return model
   }
+    
+  func listForCustomer(customerId: UUID, on db: any Database) async throws -> [Payment] {
+    try await Payment.query(on: db)
+      .join(CustomerRequest.self, on: \Payment.$requestId == \CustomerRequest.$id)
+      .filter(CustomerRequest.self, \.$customerId == customerId)
+      .sort(\.$createdAt, .descending)
+      .all()
+  }
 }

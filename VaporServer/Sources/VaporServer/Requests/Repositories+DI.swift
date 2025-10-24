@@ -16,6 +16,7 @@ extension Application {
     var stockLevel: any StockLevelRepository
     var movement: any StockMovementRepository
     var customerRequest: any CustomerRequestRepository
+    var payment: any PaymentRepository
   }
   
   private struct RepositoriesKey: StorageKey {

@@ -17,7 +17,8 @@ extension Application.RepositoriesProvider {
         batch: SQLiteBatchRepository(),
         stockLevel: SQLiteStockLevelRepository(),
         movement: SQLiteStockMovementRepository(),
-        customerRequest: SQLiteCustomerRequestRepository()
+        customerRequest: SQLiteCustomerRequestRepository(),
+        payment: SQLitePaymentRepository()
       )
     }
   }
