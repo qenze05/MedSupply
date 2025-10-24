@@ -30,6 +30,24 @@ struct SQLiteCustomerRequestRepository: CustomerRequestRepository {
     let lower = (safePage - 1) * safePer
     return try await q.range(lower..<(lower + safePer)).all()
   }
+    
+  func listAll(
+    status: CustomerRequestStatus?,
+    customerId: UUID?,
+    productId: UUID?,
+    page: Int,
+    per: Int,
+    on db: any Database
+  ) async throws -> [CustomerRequest] {
+    var q = CustomerRequest.query(on: db).sort(\.$createdAt, .descending)
+    if let status { q = q.filter(\.$status == status) }
+    if let customerId { q = q.filter(\.$customerId == customerId) }
+    if let productId { q = q.filter(\.$productId == productId) }
+    let safePer = min(100, max(1, per))
+    let safePage = max(1, page)
+    let lower = (safePage - 1) * safePer
+    return try await q.range(lower..<(lower + safePer)).all()
+  }
 
   func save(_ model: CustomerRequest, on db: any Database) async throws -> CustomerRequest {
     try await model.save(on: db)

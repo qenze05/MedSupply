@@ -105,3 +105,49 @@ struct CustomerRequestServiceImpl: CustomerRequestService {
     return CustomerRequestResponseDTO(from: saved)
   }
 }
+
+
+extension CustomerRequestServiceImpl {
+  func adminList(
+    status: CustomerRequestStatus?,
+    customerId: UUID?,
+    productId: UUID?,
+    page: Int,
+    per: Int,
+    on db: any Database
+  ) async throws -> [CustomerRequestResponseDTO] {
+    let items = try await requestRepo.listAll(
+      status: status, customerId: customerId, productId: productId,
+      page: page, per: per, on: db
+    )
+    return items.map(CustomerRequestResponseDTO.init(from:))
+  }
+
+  func adminSetStatus(
+    id: UUID,
+    to newStatus: CustomerRequestStatus,
+    by admin: UserRecord,
+    on db: any Database
+  ) async throws -> CustomerRequestResponseDTO {
+    guard let model = try await requestRepo.find(id, on: db) else {
+      throw Abort(.notFound)
+    }
+
+    let old = model.status
+    let allowed: Set<CustomerRequestStatus> = {
+      switch old {
+      case .pending:  return [.approved, .declined]
+      case .approved: return [.fulfilled, .declined]
+      case .declined, .fulfilled, .cancelled: return []
+      }
+    }()
+
+    guard allowed.contains(newStatus) else {
+      throw Abort(.conflict, reason: "invalid status transition \(old.rawValue) → \(newStatus.rawValue)")
+    }
+
+    model.status = newStatus
+    let saved = try await requestRepo.save(model, on: db)
+    return CustomerRequestResponseDTO(from: saved)
+  }
+}

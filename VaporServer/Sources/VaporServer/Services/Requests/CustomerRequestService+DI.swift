@@ -14,6 +14,8 @@ protocol CustomerRequestService: Sendable {
   func listMine(for user: UserRecord, status: CustomerRequestStatus?, page: Int, per: Int, on db: any Database) async throws -> [CustomerRequestResponseDTO]
   func details(id: UUID, for user: UserRecord, on db: any Database) async throws -> CustomerRequestResponseDTO
   func cancel(id: UUID, by user: UserRecord, on db: any Database) async throws -> CustomerRequestResponseDTO
+  func adminList(status: CustomerRequestStatus?, customerId: UUID?, productId: UUID?, page: Int, per: Int, on db: any Database) async throws -> [CustomerRequestResponseDTO]
+  func adminSetStatus(id: UUID, to newStatus: CustomerRequestStatus, by admin: UserRecord, on db: any Database) async throws -> CustomerRequestResponseDTO
 }
 
 extension Application.Services {

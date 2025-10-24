@@ -30,3 +30,7 @@ struct CustomerRequestResponseDTO: Content {
     self.createdAt = m.createdAt
   }
 }
+
+struct SetCustomerRequestStatusDTO: Content {
+  let status: CustomerRequestStatus
+}
