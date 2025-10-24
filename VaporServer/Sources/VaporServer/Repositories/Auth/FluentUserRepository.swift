@@ -34,6 +34,14 @@ public struct FluentUserRepository: UserRepository, Sendable {
     guard let id = user.id else { throw Abort(.internalServerError, reason: "Failed to persist user") }
     return UserRecord(id: id, email: user.email, passwordHash: user.passwordHash, fullName: user.fullName, role: user.role)
   }
+  
+  public func listByRoles(_ roles: [String], on req: Request) async throws -> [UserRecord] {
+      guard !roles.isEmpty else { return [] }
+      let rows = try await User.query(on: req.db)
+        .filter(\.$role ~~ roles) // IN
+        .all()
+      return rows.map(UserRecord.init)
+    }
 }
 
 private extension UserRecord {

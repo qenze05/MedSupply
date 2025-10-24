@@ -10,41 +10,39 @@ import Vapor
 extension Application {
   struct AppServices {
     var inventory: any InventoryService
+    var notification: any NotificationService
   }
   
-  private struct AppServicesKey: StorageKey {
-    typealias Value = AppServices
-  }
-  
+  private struct AppServicesKey: StorageKey { typealias Value = AppServices }
   var appServices: AppServices {
     get {
-      guard let value = storage[AppServicesKey.self] else {
-        fatalError("AppServices not configured. Call app.appServices.use(...) in configure.swift")
-      }
-      return value
+      precondition(storage[AppServicesKey.self] != nil, "AppServices is not initialized. Call app.use(.live) before accessing app.appServices.")
+      return storage[AppServicesKey.self]!
     }
     set { storage[AppServicesKey.self] = newValue }
   }
   
-  struct AppServicesProvider {
-    let make: (Application) -> AppServices
+  
+  
+  struct AppServicesProvider { let build: (Application) -> AppServices }
+  
+  static var live: AppServicesProvider {
+    .init { app in
+      let repos = app.repositories
+      let email = SMTPEmailSender(app: app)
+      let notif = NotificationServiceImpl(repos: repos, emailSender: email)
+      
+      return .init(
+        inventory: InventoryServiceImpl(repos: repos, notifs: notif),
+        notification: notif
+      )
+    }
   }
   
   func use(_ provider: AppServicesProvider) {
-    self.appServices = provider.make(self)
+    let built = provider.build(self)
+    self.appServices = built
   }
 }
 
-extension Application.AppServicesProvider {
-  static var live: Application.AppServicesProvider {
-    .init { app in
-        .init(
-          inventory: InventoryServiceImpl(repos: app.repositories)
-        )
-    }
-  }
-}
-
-extension Request {
-  var appServices: Application.AppServices { application.appServices }
-}
+extension Request { var appServices: Application.AppServices { application.appServices } }

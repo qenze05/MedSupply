@@ -1,5 +1,5 @@
 {
-  "originHash" : "f927658b6200972c157356716b30ff0137c34391a93ba454bacbd5203c78edc6",
+  "originHash" : "c38a6977f37a6bf690e556073e1c2b6ddf4d468d0a498626ac2400ab16beb8d5",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -89,6 +89,15 @@
       "state" : {
         "revision" : "93f7222c8e195cbad39fafb5a0e4cc85a8def7ea",
         "version" : "4.9.2"
+      }
+    },
+    {
+      "identity" : "smtpkitten",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/joannis/SMTPKitten.git",
+      "state" : {
+        "revision" : "6ac846333a0c98230c9201b83e907d9575460aae",
+        "version" : "0.2.3"
       }
     },
     {

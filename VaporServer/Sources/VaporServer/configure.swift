@@ -11,11 +11,14 @@ public func configure(_ app: Application) async throws {
   registerAuthMigrations(app)
   registerInventoryMigrations(app)
   registerRequestMigrations(app)
+  
+  app.migrations.add(CreateNotifications())
+  
   try await app.autoMigrate()
   
   app.use(.sqlite)
   
-  app.use(.live)
+  app.use(Application.live)
   
   registerAuthDependencies(app)
   let secret = Environment.get("JWT_SECRET") ?? "dev_secret_change_me_please_change"

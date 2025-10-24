@@ -12,8 +12,12 @@ import Fluent
 struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
   
   private let repos: Application.Repositories
-  init(repos: Application.Repositories) { self.repos = repos }
+  private let notifs: any NotificationService
   
+  init(repos: Application.Repositories, notifs: any NotificationService) {
+    self.repos = repos
+    self.notifs = notifs
+  }
   
   private func validateQty(_ qty: Int) throws {
     if qty <= 0 { throw InventoryError.invalidQuantity }
@@ -68,6 +72,7 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
       let level = try await repos.stockLevel.changeOnHand(productID: productID, locationID: locationID, batchID: batchID, delta: qty, on: tx)
       try await record(kind: .inbound, productID: productID, from: nil, to: locationID, batchID: batchID,
                        qty: qty, reason: reason, reference: reference, performedBy: performedBy, on: tx)
+      try? await checkReorderAndNotify(productID: productID, locationID: locationID, on: db)
       return level
     }
   }
@@ -136,6 +141,8 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
         on: tx
       )
       
+      try? await checkReorderAndNotify(productID: productID, locationID: locationID, on: db)
+      
       return updated
     }
   }
@@ -159,6 +166,10 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
       
       try await record(kind: .transfer, productID: productID, from: fromLocationID, to: toLocationID, batchID: batchID,
                        qty: qty, reason: reason, reference: reference, performedBy: performedBy, on: tx)
+      
+      try? await checkReorderAndNotify(productID: productID, locationID: fromLocationID, on: db)
+      try? await checkReorderAndNotify(productID: productID, locationID: toLocationID,   on: db)
+
       return (fromLevel, toLevel)
     }
   }
@@ -178,6 +189,9 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
       let updated = try await repos.stockLevel.changeReserved(productID: productID, locationID: locationID, batchID: batchID, delta: +qty, on: tx)
       try await record(kind: .adjustment, productID: productID, from: nil, to: nil, batchID: batchID,
                        qty: qty, reason: reason ?? "reserve", reference: reference, performedBy: performedBy, on: tx)
+      
+      try? await checkReorderAndNotify(productID: productID, locationID: locationID, on: db)
+      
       return updated
     }
   }
@@ -196,6 +210,9 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
       let updated = try await repos.stockLevel.changeReserved(productID: productID, locationID: locationID, batchID: batchID, delta: -qty, on: tx)
       try await record(kind: .adjustment, productID: productID, from: nil, to: nil, batchID: batchID,
                        qty: qty, reason: reason ?? "unreserve", reference: reference, performedBy: performedBy, on: tx)
+      
+      try? await checkReorderAndNotify(productID: productID, locationID: locationID, on: db)
+
       return updated
     }
   }
@@ -219,7 +236,35 @@ struct InventoryServiceImpl: InventoryService, @unchecked Sendable {
                            qty: -delta, reason: reason ?? "inventory -", reference: reference, performedBy: performedBy, on: tx)
         }
       }
+      
+      try? await checkReorderAndNotify(productID: productID, locationID: locationID, on: db)
+      
       return updated
     }
   }
+}
+
+// MARK: - Notifications
+extension InventoryServiceImpl {
+  private func checkReorderAndNotify(productID: UUID, locationID: UUID, on db: any Database) async throws {
+      guard let level = try await repos.stockLevel.find(productID: productID, locationID: locationID, batchID: nil, on: db),
+            let product = try await repos.product.find(id: productID, on: db),
+            let threshold = level.reorderLevel
+      else { return }
+
+      let available = level.onHand - level.reserved
+      guard available <= threshold else { return }
+
+      if let ownerID = product.createdByUserID,
+         let owner = try await User.find(ownerID, on: db) {
+        let html = """
+          <h3>Низький залишок</h3>
+          <p>Товар: \(product.name)</p>
+          <p>Локація: \(locationID.uuidString)</p>
+          <p>Доступно: \(available)</p>
+          <p>Поріг reorderLevel: \(threshold)</p>
+        """
+        try await notifs.notifyEmail(to: owner, subject: "Низький залишок: \(product.name)", html: html, plain: nil, on: db)
+      }
+    }
 }
